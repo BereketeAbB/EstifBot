@@ -1,0 +1,31 @@
+doctype html
+html
+  head
+    title ዓምደ እስጢፋኖስ ጥያቄ መቀበያ
+  body
+    h1 ዓምደ እስጢፋኖስ
+    p ጥያቄ መቀበያ
+
+    form(action="", method="" id="form")
+      p የ* ምልክት ያለባቸውን መዝለል አይቻልም።
+      p(id="telegramId")= telegramId
+      label(for="name") ስም: 
+      input(type="text", id="name", name="name") 
+      br
+
+      label(for="phoneNumber") ስልክ ቁጥር: 
+      input(type="text", id="phoneNumber", name="phoneNumber") 
+      br
+
+      label(for="questionTitle") የጥያቄው ርእስ: 
+      input(type="text", id="questionTitle", name="questionTitle") 
+      br
+
+      label(for="question") ጥያቄዎት:
+      br
+      textarea(id="question", name="question", rows="7", cols="50") 
+      br
+
+      input(type="submit", value="Submit" id="submit")
+
+      script(src='/js/question.js') 
