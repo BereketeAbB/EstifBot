@@ -1,7 +1,7 @@
 const path = require('path')
 require('dotenv').config()
 
-class User {
+class UserMenu {
     constructor (bot) {
         this.bot = bot
         this.UItitle = "ዓምደ እስጢፋኖስ"
@@ -9,15 +9,15 @@ class User {
     }
 
     
-    startMenu(userId){
-        this.bot.telegram.sendMessage(userId, `${this.UItitle} \n${this.UIbody}`, {
+    startMenu(ctx){
+        this.bot.telegram.sendMessage(ctx.from.id, `${this.UItitle} \n${this.UIbody}`, {
             parse_mode: "HTML",
             reply_markup: {
                 inline_keyboard: [
                     [{
                         text: "ጥያቄ",
                         web_app: {
-                           url: `${process.env.BOT_API}/question/${userId}`
+                           url: `${process.env.BOT_API}/question/${ctx.from.id}`
                         }
                     }]
                 ]
@@ -45,4 +45,4 @@ class User {
 
 }
 
-module.exports = {User}
+module.exports = UserMenu

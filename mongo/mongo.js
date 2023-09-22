@@ -1,7 +1,7 @@
 const mongoose = require('mongoose')
 require('dotenv').config()
 
-const Question = require('./Schema')
+const {Question, User} = require('./Schema')
 
 function db () {
     mongoose.connect(process.env.MONGO_CONN)
@@ -12,18 +12,16 @@ function db () {
     })
 }
 
-
-db.prototype.addQuestion = async function(telegramId, userData, questionObj) {
+db.prototype.addQuestion = async function(questionObj) {
     return new Promise(async (resolve, reject) => {
-        await Question.findOneAndUpdate({telegramId}, {$set: userData, $push: {question: questionObj}}, {
-            returnDocument: 'after',
-        })
+
+        await Question.create(questionObj)
             .then((data) => {
+                //console.log(data);
                 const res = {
                     status: true,
                     result: {
                         msg: "Question Created",
-                        username: data.userData.username
                     }
                 }
                 return resolve(res)
@@ -40,15 +38,7 @@ db.prototype.addQuestion = async function(telegramId, userData, questionObj) {
     })
 }
 
-db.prototype.getQuestions = async function (query) {
-    let queryObj = {}
-    if(typeof(query) == "object" && query.hasOwnProperty("isSeen")){
-        queryObj = {'question': {$elemMatch: {isSeen: query.isSeen}}}
-    }
-    if (query && query.hasOwnProperty("username")){
-        queryObj.username = username
-    }
-
+db.prototype.getQuestions = async function (queryObj) {
     return new Promise(async (resolve, reject) => {
         await Question.find(queryObj)
             .then((data) => {
@@ -73,6 +63,113 @@ db.prototype.getQuestions = async function (query) {
             })
     })
 }
+
+db.prototype.addUser = async function (userObj) {
+    return new Promise(async (resolve, reject) => {
+        await User.findOneAndUpdate({telegramId: userObj.telegramId || ""}, userObj, {new: true, upsert: true})
+            .then(data => {
+                const ret = {
+                    status: true,
+                    result: {
+                        msg: "User Added to Database",
+                        user: data
+                    }
+                }
+                resolve(ret)
+            })
+            .catch (err => {
+                const ret = {
+                    status: true,
+                    result: {
+                        msg: err.message,
+                        err
+                    }
+                }
+                reject(ret)
+            })
+    })
+}
+
+db.prototype.getUser = async function (queryObj) {
+    return new Promise(async (resolve, reject) => {
+        await User.find(queryObj)
+            .then(data => {
+                const ret = {
+                    status: true,
+                    result: {
+                        length: data.length,
+                        users: data
+                    }
+                }
+                resolve(ret)
+            })
+            .catch (err => {
+                const ret = {
+                    status: true,
+                    result: {
+                        msg: err.message,
+                        err
+                    }
+                }
+                reject(ret)
+            })
+    })
+}
+
+db.prototype.makeSeen = async function (questionId) {
+    return new Promise(async (resolve, reject) => {
+        await Question.findByIdAndUpdate(questionId, {$set: {isSeen: true}})
+            .then(data => {
+                const ret = {
+                    status: true,
+                    result: {
+                        msg: "Question is seen",
+                        question: data
+                    }
+                }
+                resolve(ret)
+            })
+            .catch(err => {
+                const ret = {
+                    status: false,
+                    result: {
+                        msg: "Question status is not updated",
+                        err
+                    }
+                }
+                reject(ret)
+            })
+
+    })
+}     
+
+db.prototype.addAnswer = async function (questionId, myAnswer) {
+    return new Promise(async (resolve, reject) => {
+        await Question.findByIdAndUpdate(questionId, {$set: {myAnswer}})
+            .then(data => {
+                const ret = {
+                    status: true,
+                    result: {
+                        msg: "Answer is Added",
+                        question: data
+                    }
+                }
+                resolve(ret)
+            })
+            .catch(err => {
+                const ret = {
+                    status: false,
+                    result: {
+                        msg: "Answer is not updated",
+                        err
+                    }
+                }
+                reject(ret)
+            })
+
+    })
+}     
+
 
 
 const mongoDb = new db()

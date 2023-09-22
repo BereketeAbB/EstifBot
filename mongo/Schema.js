@@ -1,25 +1,11 @@
 const mongoose = require('mongoose')
-
-const questionSchema = new mongoose.Schema({
-    isAnnonymous: {
-        type: Boolean,
-        required: [true, "You need to specify the visibility of the user"],
-        default: false
-    },
-    isUrgent: {
-        type: Boolean,
-        required: [true, "You need to specify the Urgency of the question"],
-        default: false
-    },
-    telegramId: {
-        type: String,
-        required: [true, "No Telegram Id found"]
-    },
-    
-
-    userData: {
+const userSchema = new mongoose.Schema({
         telegramName: {
             type: String
+        },
+        telegramId: {
+            type: String,
+            required: [true, "Telegram Id must be specified"]
         },
         firstName: {
             type: String
@@ -34,29 +20,45 @@ const questionSchema = new mongoose.Schema({
             type: String,
             //required: true
         }
+    })
+
+const User = mongoose.model('User', userSchema)
+
+const questionSchema = new mongoose.Schema({
+    user: Object,
+    telegramId: String,
+    questionTitle: {
+        type: String
+    },
+    questionText: {
+        type: String
+    },
+    date: {
+        type: Date
     }, 
-    question: [{
-        questionTitle: {
-            type: String
-        },
-        questionText: {
-            type: String
-        },
-        date: {
-            type: Date
-        }, 
-        isSeen: {
-            type: Boolean,
-            default: false
-        }
-        // sth: {
-        //     type: String,
-        //     required: true
-        // }
-    }]
+    isSeen: {
+        type: Boolean,
+        default: false
+    },
+    isUrgent: {
+        type: Boolean,
+        required: [true, "You need to specify the Urgency of the question"],
+        default: false
+    },
+    myAnswer: {
+        type: String
+    }
+})
+
+questionSchema.pre('save',  async function (next) {
+    console.log(this);
+    this.user = await User.findOne({telegramId: this.telegramId})
+    next()
 })
 
 const Question = mongoose.model('Question', questionSchema)
 
 
-module.exports = Question
+
+
+module.exports = {Question, User}

@@ -48,6 +48,8 @@ class ExpressText {
             axios.post(`https://api.telegram.org/bot${process.env.BOT_TOKEN}/sendMessage`, {
             chat_id: telegramId, 
             text,
+            parse_mode: "HTML"
+            
         }).then((result) => {
             if(result.data.ok){
                 const ret = {
