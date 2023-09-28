@@ -2,7 +2,7 @@ require('dotenv').config()
 
 const { Question } = require('../../mongo/Schema')
 const mongoDb = require('../../mongo/mongo')
-const {makeQuestion, makeResponse, makeResponseConfirm} = require('../../utils/utils')
+const questionMaker = require('../../utils/utils')
 const estifController = require('./../controller/estifController')
 
 class EstifMenu {
@@ -11,7 +11,7 @@ class EstifMenu {
         this.startUI = "Welcome Estif! \nHere you will get your questions"
         
     }
-    
+       
 
     startMenu = (ctx) => {
         const {first_name, username, id} = ctx.from 
@@ -68,7 +68,7 @@ class EstifMenu {
 
                 //setTimeout
                 questions.forEach(question => {
-                    ctx.sendMessage(makeQuestion(question), {
+                    ctx.sendMessage(questionMaker.makeQuestion(question), {
                         parse_mode: "HTMl",
                         reply_markup: {
                             inline_keyboard: [
@@ -150,18 +150,18 @@ class EstifMenu {
 
         const question = await Question.findById(questionId)
 
-        ctx.reply(makeResponseConfirm(question, "private"), {
+        ctx.reply(questionMaker.makeResponseConfirm(question, "private"), {
             parse_mode: "HTML"
         })
 
         this.bot.on('message', async (ctx) => {
             const response = ctx.message.text
-            this.bot.telegram.sendMessage(question.user.telegramId, makeResponse(question, response), {
+            this.bot.telegram.sendMessage(question.user.telegramId, questionMaker.makeResponse(question, response), {
                 parse_mode: "HTML"
             })
 
             ctx.reply("Your answer has been sent privately. If he has't stopped the bot, he will be receiving it.")
-            console.log(question);
+
             await mongoDb.addAnswer(question._id, response)
                 .catch(err => {
                     ctx.reply("Error: your answer has not been updated to the database.")
@@ -192,7 +192,97 @@ class EstifMenu {
         })
 
     }
-}
 
+    async getGroupReplyPrompt (ctx) {
+        const questionId = ctx.match[1]
+        console.log(questionId);
+
+       try {
+        const question = await Question.findById(questionId)
+             .catch(err => {
+                 throw new Error(err.message)
+             })
+ 
+         ctx.reply(questionMaker.makeResponseConfirm(question, "private"), {
+             parse_mode: "HTML"
+         })
+ 
+         this.bot.on('message', async (ctx) => {
+             const response = ctx.message.text
+             this.bot.telegram.sendMessage(process.env.CHANNEL_USERNAME, questionMaker.makeResponseGroup(question, response), {
+                 parse_mode: "HTML"
+             })
+ 
+             await mongoDb.addAnswer(question._id, response)
+                 .catch(err => {
+                     ctx.reply("Error: your answer has not been updated to the database.")
+                 })
+
+            ctx.reply("Your answer has been sent privately. If he has't stopped the bot, he will be receiving it.")
+ 
+             await mongoDb.makeSeen(question._id)
+                 .catch(err => {
+                     ctx.reply("Error: Seen Status has not been updated.")
+                 })
+ 
+             ctx.sendMessage("Choose Message Types", {
+                 parse_mode: "HTML",
+                 reply_markup: {
+                     inline_keyboard: [
+                         [
+                             {
+                                 text: "New Messages",
+                                 callback_data: "getNewQuestions"
+                             },
+                             {
+                                 text: "By Username",
+                                 callback_data: "getQuestionsByUsername"
+                             }
+                         ]
+                     ]
+                 }
+             })
+         })
+ 
+        } catch (error) {
+            console.log(error);
+       }
+    }
+
+    async getQuestionSeenOnly (ctx) {
+        const questionId = ctx.match[1]
+
+       try {
+        const question = await Question.findById(questionId)
+             .catch(err => {
+                 throw new Error(err.message)
+
+                })
+                
+            await mongoDb.makeSeen(question._id)
+            .catch(err => {
+                ctx.reply("Error: Seen Status has not been updated.")
+            })
+ 
+            ctx.deleteMessage(ctx.update.callback_query.message.message_id)
+
+        } catch (error) {
+            console.log(error);
+       }
+    }
+
+    async discardQuestion(ctx) {
+        const question = ctx.match[1]
+
+        await Question.findByIdAndDelete(question._id)
+            .then(data => {
+                ctx.reply("Question Deleted from the database") 
+            })
+            .catch( err => {
+                throw new Error(err.message)
+            })
+
+    }
+}
 
 module.exports = EstifMenu

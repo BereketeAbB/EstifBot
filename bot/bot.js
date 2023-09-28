@@ -27,17 +27,35 @@ bot.start(async (ctx) => {
 
     userMenu.startMenu(ctx)
 
+    ctx.sendMessage("Requesting Contact", {
+        parse_mode: "HTML",
+        reply_markup: {
+            keyboard: [
+                [
+                    {
+                    text: "request contact",
+                    request_contact: true
+                    }
+                ]
+            ],
+            one_time_keyboard: true,
+            resize_keyboard: true
+        }
+
+    })
+    bot.on("contact", ctx => console.log(ctx.update.message.contact))
+
     await mongoDb.addUser(user)
-        .then(() => console.log(`${ctx.from.username}: ${ctx.from.id} is added on the database`))
+        .then(() => console.log(`${ctx.from.username}: ${ctx.from.id} is on the database`))
         .catch((err) => ctx.reply(err.message))   
 })
 
 bot.action("getQuestionsOption", (ctx) => estifMenu.getQuestionsOptionMenu(ctx))
 bot.action("getNewQuestions",(ctx) =>  estifMenu.getNewQuestionsMenu(ctx))
-bot.action(/private_(.+)/, ctx => estifMenu.getPrivateReplyPrompt(ctx))
-// bot.action("group(.+)", ctx => )
-// bot.action("discard_(.+)", ctx => )
-// bot.action("seen_(.+)", ctx => )
 
+bot.action(/private_(.+)/, ctx => estifMenu.getPrivateReplyPrompt(ctx))
+bot.action(/group_(.+)/, ctx => estifMenu.getGroupReplyPrompt(ctx))
+bot.action(/seen_(.+)/, ctx => estifMenu.getQuestionSeenOnly(ctx))
+bot.action("discard_(.+)", ctx => estifMenu.discardQuestion(ctx))
 
 module.exports = bot;
