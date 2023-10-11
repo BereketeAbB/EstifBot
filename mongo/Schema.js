@@ -27,6 +27,7 @@ const User = mongoose.model('User', userSchema)
 const questionSchema = new mongoose.Schema({
     user: Object,
     telegramId: String,
+    questionType: String,
     questionTitle: {
         type: String
     },
@@ -37,6 +38,10 @@ const questionSchema = new mongoose.Schema({
         type: Date
     }, 
     isSeen: {
+        type: Boolean,
+        default: false
+    },
+    isDiscarded: {
         type: Boolean,
         default: false
     },

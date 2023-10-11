@@ -1,11 +1,6 @@
 const {Telegraf} = require('telegraf')
 
-const {Question, User} = require('../../mongo/Schema')
-const {sendQuestion} = require('../../utils/utils')
-
 const mongoDb = require('../../mongo/mongo')
-const estif = require('../menu/estifMenu')
-const user = require('../menu/userMenu')
 
 const bot = new Telegraf("6379778395:AAG6aEGdbnvOMwmxRSWXkM_L-maefn8nZxg")
 
@@ -51,5 +46,4 @@ exports.getNewQuestions = async (ctx) => {
             reject(ret)
         })
     })
- 
 }
